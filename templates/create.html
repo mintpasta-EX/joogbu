@@ -1,0 +1,69 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>골드 던전 - 아이템 등록</title>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Malgun Gothic', sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 500px; background-color: #1e1e1e; border: 2px solid #333; border-radius: 8px; padding: 20px; }
+        h1 { color: #ffd700; border-bottom: 1px solid #ffd700; padding-bottom:10px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 8px; margin: 5px 0 15px 0; background:#121212; color:white; border:1px solid #444; box-sizing:border-box; }
+        button, input[type="button"] { background-color: #333; color: white; border: 1px solid #555; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 48%; }
+        input[type="button"]:hover { background-color: #ffd700; color: black; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 아이템 등록 (글쓰기)</h1>
+        <form method="post">
+            분류:
+            <select name="category" id="category">
+                <option value="무기">무기</option>
+                <option value="방어구">방어구</option>
+                <option value="소모품">소모품</option>
+            </select><br>
+
+            아이템 등급 (제목 앞 추가):
+            <select id="grade">
+                <option value="[rare]">[희귀] 파란색</option>
+                <option value="[epic]">[영웅] 보라색</option>
+                <option value="[legendary]">[전설] 주황색</option>
+            </select><br>
+
+            제목 (아이템명):<input type="text" name="title" id="title" placeholder="화염의 대검"><br>
+            작성자:<input type="text" name="author" id="author" value="{{session['username']}}" readonly><br>
+
+            능력치 (무기 0~100 / 방어구 0~50):<input type="number" name="stat" id="stat" value="0"><br>
+
+            가격 (Gold):<input type="number" name="price" id="price" placeholder="50000"><br>
+            내용 (옵션):<textarea name="content" id="content" style="height:100px;"></textarea><br>
+
+            <div style="display:flex; justify-content:space-between;">
+                <input type="button" value="저장" onclick="
+                var cat = document.getElementById('category').value;
+                var statVal = parseInt(document.getElementById('stat').value);
+
+                if(document.getElementById('title').value == '' || document.getElementById('price').value == ''){
+                        alert('제목과 가격은 필수입니다!');
+                        return;
+                }
+
+                if(cat === '무기' && (statVal < 0 || statVal > 100)) {
+                    alert('무기 능력치는 0~100 사이로 입력하세요.');
+                    return;
+                }
+                if(cat === '방어구' && (statVal < 0 || statVal > 50)) {
+                    alert('방어구 능력치는 0~50 사이로 입력하세요.');
+                    return;
+                }
+
+                var g = document.getElementById('grade').value;
+                var t = document.getElementById('title').value;
+                document.getElementById('title').value = g + t;
+                document.querySelector('form').submit();
+                ">
+                <input type="button" value="취소" onclick="location.href='/'">
+            </div>
+        </form>
+    </div>
+</body>
+</html>

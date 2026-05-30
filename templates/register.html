@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items:center; height:100vh; margin:0; }
+        .container { width: 350px; background-color: #1e1e1e; border: 2px solid #3498db; border-radius: 8px; padding: 30px; text-align:center; }
+        h1 { color: #3498db; margin-top:0; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin: 10px 0 20px 0; background:#121212; color:white; border:1px solid #444; box-sizing:border-box; }
+        input[type="button"], button { width:100%; background-color: #2980b9; color: white; border: 1px solid #3498db; padding: 12px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-bottom:10px; }
+        input[type="button"]:hover, button:hover { background-color: #3498db; color: black; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>경매장<br><span style="font-size: 14pt; color: #aaa;">- 신규 길드원 등록 -</span></h1>
+        <p style="color:red;">{{error}}</p>
+
+        {% if success %}
+        <p style="color:#2ecc71;">{{success}}</p>
+        <button onclick="location.href='/login/'">확인 (로그인으로)</button>
+        {% else%}
+        <form method="post" style="text-align:left;">
+            아이디: <input type="text" name="username" id="username">
+            비밀번호: <input type="password" name="password" id="password">
+            <input type="button" value="가입" onclick="
+            if(document.getElementById('username').value == ''
+            || document.getElementById('password').value == ''){
+                alert('모든 항목을 입력해주시오');
+            } else {
+                document.querySelector('form').submit();
+            }">
+            <input type="button" value="취소" onclick="location.href='/'" style="background:#333; border-color:#555;">
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>

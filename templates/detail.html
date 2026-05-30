@@ -1,0 +1,51 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>골드 던전 - 아이템 상세</title>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Malgun Gothic', sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 600px; background-color: #1e1e1e; border: 2px solid #333; border-radius: 8px; padding: 20px; }
+        h1 { color: #ffd700; margin-top:0; border-bottom: 1px solid #444; padding-bottom:10px; }
+        .price-box { background: #252525; border-left: 4px solid #ffd700; padding: 15px; margin: 15px 0; font-size: 14pt; display: flex; justify-content: space-between;}
+        .content-box { background: #151515; border: 1px solid #333; padding: 15px; min-height:100px; margin-bottom: 20px; white-space:pre-wrap; }
+        button { background-color: #333; color: white; border: 1px solid #555; padding: 10px; cursor: pointer; border-radius: 4px; font-weight:bold; }
+        button:hover { background-color: #ffd700; color: black; }
+        .btn-danger { border-color: #e74c3c; color: #e74c3c; }
+        .btn-danger:hover { background-color: #e74c3c; color:white; }
+        .item-rare { color: #0070dd; text-decoration: none; font-weight: bold; }
+        .item-epic { color: #a335ee; text-decoration: none; font-weight: bold; }
+        .item-legendary { color: #ff8000; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>게시판 (상세 조회)</h1>
+
+        {% set display_title = post[1] %}
+        {% set css_class = "" %}
+        {% if '[rare]' in post[1] %} {% set css_class = "item-rare" %} {% set display_title = post[1]|replace('[rare]','[희귀] ') %} {% endif %}
+        {% if '[epic]' in post[1] %} {% set css_class = "item-epic" %} {% set display_title = post[1]|replace('[epic]','[영웅] ') %} {% endif %}
+        {% if '[legendary]' in post[1] %} {% set css_class = "item-legendary" %} {% set display_title = post[1]|replace('[legendary]','[전설] ') %} {% endif %}
+
+        <h2 class="{{css_class}}">{{display_title}}</h2>
+        <p style="color:#888;">분류: {{post[6]}} | 작성자: {{post[3]}} | 날짜: {{post[4]}} | 조회수: {{post[5]}}</p>
+
+        <div class="price-box">
+            <span>판매 가격: <strong style="color:#ffd700;">{{post[7]}} G</strong></span>
+            <span>기본 능력치: <strong style="color:#4cd137;">+{{post[8]}}</strong></span>
+        </div>
+
+        <div class="content-box">{{post[2]}}</div>
+
+        <div style="display:flex; gap:10px;">
+            {% if session['username'] == post[3] or session['role'] == 'admin' %}
+                <button onclick="location.href='/update/{{post[0]}}/'">수정</button>
+                <button class="btn-danger" onclick="if(confirm('이 아이템을 판매 취소(삭제)하시겠습니까?')) location.href='/delete/{{post[0]}}/'">판매취소 (삭제)</button>
+            {% else %}
+                <button class="btn-danger" onclick="if(confirm('이 아이템을 구매하시겠습니까?')) location.href='/delete/{{post[0]}}/'">💰 즉시 구매</button>
+            {% endif %}
+            <button onclick="location.href='/'">목록으로</button>
+        </div>
+    </div>
+</body>
+</html>
