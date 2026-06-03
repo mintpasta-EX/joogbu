@@ -18,7 +18,8 @@ def get_db():
 
 def init_db():
     conn, cursor = get_db()
-    # stat(능력치) 컬럼 추가됨!
+
+    # 1. 게시글(아이템) 테이블 (기존과 동일, stat 포함)
     cursor.execute('''CREATE TABLE IF NOT EXISTS posts
                       (
                           id
@@ -52,6 +53,7 @@ def init_db():
                           0
                       )''')
 
+    # 2. 유저 테이블 (여기에 money 칸이 새로 추가되었습니다!)
     cursor.execute('''CREATE TABLE IF NOT EXISTS users
                       (
                           id
@@ -66,12 +68,18 @@ def init_db():
                           role
                           TEXT
                           DEFAULT
-                          'user'
+                          'user',
+                          money
+                          INTEGER
+                          DEFAULT
+                          100000
                       )''')
 
+    # 3. 어드민 계정 자동 생성 (어드민에게는 99,999,999 골드 지급)
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO users(username, password, role) VALUES(?,?,?)", ('admin', '1234', 'admin'))
+        cursor.execute("INSERT INTO users(username, password, role, money) VALUES(?,?,?,?)",
+                       ('admin', '1234', 'admin', 99999999))
     conn.commit()
     conn.close()
 
@@ -150,9 +158,19 @@ def index():
             <td style="padding: 15px 10px; color: #888; font-size: 10pt; border-bottom: 1px solid #333;">{date}</td>
         </tr>
         '''
-    # 리턴 줄에 category_filter 변수도 HTML로 넘겨주도록 추가됨!
+    user_money = 0
+    if 'username' in session:
+        conn, cursor = get_db()  # 연결 다시 열기
+        cursor.execute('SELECT money FROM users WHERE username = ?', (session['username'],))
+        user_res = cursor.fetchone()
+        if user_res:
+            user_money = user_res[0]
+        conn.close()
+
+    # 리턴 줄 맨 끝에 user_money=user_money 가 쏙 들어갔습니다!
     return render_template('index.html', count=count, keyword=keyword, min_stat=min_stat,
-                           category_filter=category_filter, postList=postList, searchResult=searchResult)
+                           category_filter=category_filter, postList=postList, searchResult=searchResult,
+                           user_money=user_money)
 
 
 @app.route('/detail/<id>/')
@@ -215,20 +233,40 @@ def update(id):
 
 @app.route('/delete/<id>/')
 def delete(id):
+    if 'username' not in session: return redirect('/login/')
     conn, cursor = get_db()
-    cursor.execute('''DELETE FROM posts WHERE id = ?''', (id,))
-    conn.commit()
 
-    cursor.execute('SELECT id FROM posts ORDER BY id DESC LIMIT 1')
-    first = cursor.fetchone()
-    conn.close()
-    if 'username' not in session:
-        return redirect('/login/')
-    if first:
+    # 1. 지우려는(사려는) 게시물 정보 가져오기
+    cursor.execute('SELECT author, price FROM posts WHERE id = ?', (id,))
+    post = cursor.fetchone()
+    if not post:
+        conn.close()
         return redirect('/')
-    else:
-        return redirect('/empty/')
 
+    author = post[0]
+    price = post[1]
+    buyer = session['username']
+
+    # 2. 본인이 삭제하거나 어드민이 강제 삭제하는 경우가 아니라면 = '구매'하는 상황
+    if buyer != author and session.get('role') != 'admin':
+        cursor.execute('SELECT money FROM users WHERE username = ?', (buyer,))
+        buyer_money = cursor.fetchone()[0]
+
+        # 돈이 모자란 경우 경고창 띄우고 튕겨냄
+        if buyer_money < price:
+            conn.close()
+            return f"<script>alert('골드가 부족합니다! (보유: {buyer_money}G)'); location.href='/detail/{id}/';</script>"
+
+        # 돈이 충분하면: 구매자 돈은 빼고, 판매자 돈은 올려줌 (진짜 거래)
+        cursor.execute('UPDATE users SET money = money - ? WHERE username = ?', (price, buyer))
+        cursor.execute('UPDATE users SET money = money + ? WHERE username = ?', (price, author))
+
+    # 3. 거래가 끝났거나 본인 글이면 아이템 목록에서 삭제
+    cursor.execute('DELETE FROM posts WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+
+    return redirect('/')
 @app.route('/register/', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
@@ -244,7 +282,7 @@ def register():
         conn.commit()
         conn.close()
         session['username'] = username
-        return render_template('register.html',error='',success='길드 가입을 환영합니다!')
+        return render_template('register.html',error='',success='가입을 환영합니다!')
     return render_template('register.html',error='',success='')
 
 @app.route('/login/', methods=['GET','POST'])
